@@ -12,7 +12,7 @@ class FBT():
     """
     This class creates a decision tree from an XGboost
     """
-    def __init__(self,max_depth,min_forest_size,max_number_of_conjunctions,pruning_method=None):
+    def __init__(self,max_depth,min_forest_size,max_number_of_conjunctions,pruning_method=None,verbose=1):
         """
 
         :param max_depth: Maximum allowed depths of the generated tree
@@ -25,6 +25,7 @@ class FBT():
         self.max_number_of_conjunctions = max_number_of_conjunctions
         self.pruning_method = pruning_method
         self.max_depth = max_depth
+        self.verbose = verbose
 
     def fit(self,train,feature_cols,label_col, xgb_model, pruned_forest=None, trees_conjunctions_total=None):
         """
@@ -47,18 +48,21 @@ class FBT():
         self.xgb_model = xgb_model
         if pruned_forest is None or trees_conjunctions_total is None:
             self.trees_conjunctions_total = extractConjunctionSetsFromForest(self.xgb_model,train[self.label_col].unique(),self.feature_cols)
-            print('Start pruning')
+            if self.verbose > 0:
+                print('Start pruning')
             self.prune(train)
         else:
             self.pruner = Pruner()
             self.trees_conjunctions_total = trees_conjunctions_total
             self.trees_conjunctions = pruned_forest
-        self.cs = ConjunctionSet(max_number_of_conjunctions=self.max_number_of_conjunctions)
+        self.cs = ConjunctionSet(max_number_of_conjunctions=self.max_number_of_conjunctions,verbose=self.verbose)
         self.cs.fit(self.trees_conjunctions,train, feature_cols,label_col,int_features=self.int_cols)
-        print('Start ordering conjunction set in a tree structure')
+        if self.verbose > 0:
+            print('Start ordering conjunction set in a tree structure')
         self.tree = Tree(self.cs.conjunctions, self.cs.splitting_points,self.max_depth)
         self.tree.split()
-        print('Construction of tree has been completed')
+        if self.verbose > 0:
+            print('Construction of tree has been completed')
 
     def prune(self,train):
         """
@@ -71,7 +75,7 @@ class FBT():
         self.pruner = Pruner()
         if self.pruning_method == 'auc':
             self.trees_conjunctions = self.pruner.max_auc_pruning(self.trees_conjunctions_total, train[self.feature_cols],
-                                                                      train[self.label_col], min_forest_size=self.min_forest_size)
+                                                                      train[self.label_col], min_forest_size=self.min_forest_size,verbose=self.verbose)
 
     def predict_proba(self,X):
         """

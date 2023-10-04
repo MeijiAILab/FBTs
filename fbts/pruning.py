@@ -106,7 +106,7 @@ class Pruner():
             current_auc = get_auc(Y,self.predict_probas(new_forest,X))
         return new_forest
 
-    def max_auc_pruning(self, forest, X, Y, min_forest_size=10):
+    def max_auc_pruning(self, forest, X, Y, min_forest_size=10,verbose=1):
         """
         This method conduct an ensemble pruning using a greedy algorithm that maximizes the AUC on the given dataset.
 
@@ -134,7 +134,8 @@ class Pruner():
                     best_auc = temp_auc
                     best_index = i
             selected_indexes.append(best_index)
-        print('Pruned forest training set AUC: '+str(best_auc))
+        if verbose > 0:
+            print('Pruned forest training set AUC: '+str(best_auc))
         return [t for i,t in enumerate(forest) if i in selected_indexes]
 
 

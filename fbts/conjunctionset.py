@@ -17,13 +17,14 @@ class ConjunctionSet():
     Each conjunction at the given set represents a possible combination of leaves from the source decision forests.
     """
 
-    def __init__(self, max_number_of_conjunctions=np.inf, filter_method='probability'):
+    def __init__(self, max_number_of_conjunctions=np.inf, filter_method='probability', verbose=1):
         """
         :param max_number_of_conjunctions: Number of maximum allowed conjunctions at each iteration
         :param filter_method: The approach that will be takes for filtering conjunctions
         """
         self.filter_method = filter_method
         self.max_number_of_conjunctions = max_number_of_conjunctions
+        self.verbose = verbose
 
     def fit(self,trees_conjunctions,data,feature_cols,label_col, int_features = []):
         """
@@ -45,12 +46,14 @@ class ConjunctionSet():
 
 
         #Extract all the leaf combinations that were applied for training data:
-        print('Create conjunction set from training data instances')
+        if self.verbose > 0:
+            print('Create conjunction set from training data instances')
         self.create_conjunction_set_from_data(data)
 
 
         #set maximum number of conjunctions per label
-        print('Create complete conjunction set')
+        if self.verbose > 0:
+            print('Create complete conjunction set')
         self.calculate_max_conjunctions_per_label(data,label_col)
 
         # Run the algorithm of creating the complete conjunction set:
@@ -74,7 +77,8 @@ class ConjunctionSet():
             i+=1
             self.filter() #Filter redundant conjunction according to the filtering strategy
             self.size_per_iteration.append(len(self.conjunctions))
-            print('Size at iteration '+str(i)+': '+str(len(self.conjunctions)))
+            if self.verbose > 0:
+                print('Size at iteration '+str(i)+': '+str(len(self.conjunctions)))
     def filter(self):
         """
         This method filters the current conjunction set according to the filtering strategy.
@@ -159,7 +163,8 @@ class ConjunctionSet():
             if s not in participated_leaves:
                 self.training_conjunctions.append(conj)
                 participated_leaves.append(s)
-        print('Number of conjunctions created from data: '+str(len(self.training_conjunctions)))
+        if self.verbose > 0:
+            print('Number of conjunctions created from data: '+str(len(self.training_conjunctions)))
 
     def set_ordered_splitting_points(self):
         """
